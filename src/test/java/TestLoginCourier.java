@@ -6,38 +6,34 @@ import org.junit.Before;
 import org.junit.Test;
 import pojo.CreatingCourier;
 import pojo.LoginCourier;
+import steps.ApiCourier;
 
 import java.util.Random;
 
 import static io.restassured.RestAssured.given;
+import static org.apache.http.HttpStatus.SC_BAD_REQUEST;
+import static org.apache.http.HttpStatus.SC_NOT_FOUND;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.notNullValue;
 
 
 public class TestLoginCourier {
-
+    ApiCourier step=new ApiCourier();
     private String login = "number"+new Random().nextInt(999);
     private String password = "Password"+new Random().nextInt(999);
+    private String firsName = "Ivan Petrov"+new Random().nextInt(999);
     private String id;
 
     @Before
     public void setUp() {
-        RestAssured.baseURI = "https://qa-scooter.praktikum-services.ru/";
         //Создание курьера
-        given()
-                .header("Content-type", "application/json")
-                .body(new CreatingCourier(login, password, "Ivan Petrov"))
-                .when()
-                .post("/api/v1/courier");
+        step.getCreatingCourier(login,password,firsName);
     }
 
     @Test
     @Description("успешный запрос возвращает id")
     public void returnId(){
-           Response response= given()
-                .header("Content-type", "application/json")
-                .body(new LoginCourier(login, password))
-                .post("/api/v1/courier/login");
+           Response response= step.getLoginCourier(login,password);
             response.then()
                        .assertThat()
                        .body("id",notNullValue());
@@ -48,12 +44,9 @@ public class TestLoginCourier {
     @Test
     @Description("Логин с некорректным паролем")
     public void loginWithWrongPassword(){
-                given()
-                .header("Content-type", "application/json")
-                .body(new LoginCourier(login, "5164"))
-                .post("/api/v1/courier/login")
+        step.getLoginCourier(login,"password")
                .then()
-                .statusCode(404)
+                .statusCode(SC_NOT_FOUND)
                 .and()
                 .assertThat()
                 .body("message", equalTo("Учетная запись не найдена"));
@@ -62,12 +55,9 @@ public class TestLoginCourier {
     @Test
     @Description("Логин с некорректным логином")
     public void loginWithWrongLogin(){
-        given()
-                .header("Content-type", "application/json")
-                .body(new LoginCourier("Орёл", password))
-                .post("/api/v1/courier/login")
+        step.getLoginCourier("Орёл",password)
                 .then()
-                .statusCode(404)
+                .statusCode(SC_NOT_FOUND)
                 .and()
                 .assertThat()
                 .body("message", equalTo("Учетная запись не найдена"));
@@ -75,12 +65,9 @@ public class TestLoginCourier {
     @Test
     @Description("Авторизация без передачи логина")
     public void authorizationWithoutLogin(){
-        given()
-                .header("Content-type", "application/json")
-                .body(new LoginCourier(null, password))
-                .post("/api/v1/courier/login")
+        step.getLoginCourier(null,password)
                 .then()
-                .statusCode(400)
+                .statusCode(SC_BAD_REQUEST)
                 .and()
                 .assertThat()
                 .body("message", equalTo("Недостаточно данных для входа"));
@@ -89,12 +76,9 @@ public class TestLoginCourier {
     @Test
     @Description("Авторизация без передачи пароля")
     public void authorizationWithoutPassword(){
-        given()
-                .header("Content-type", "application/json")
-                .body(new LoginCourier(login, null))
-                .post("/api/v1/courier/login")
+        step.getLoginCourier(login,null)
                 .then()
-                .statusCode(400)
+                .statusCode(SC_BAD_REQUEST)
                 .and()
                 .assertThat()
                 .body("message", equalTo("Недостаточно данных для входа"));
@@ -103,9 +87,6 @@ public class TestLoginCourier {
     @After
     public void deleteCourier() {
         //Удаление курьера
-        given()
-                .header("Content-type", "application/json")
-                .when()
-                .delete("/api/v1/courier/" + id);
+        step.getDeleteCourier(id);
     }
 }

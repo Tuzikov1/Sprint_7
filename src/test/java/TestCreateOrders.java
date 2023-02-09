@@ -5,12 +5,14 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import pojo.Orders;
+import steps.ApiOrders;
 
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.CoreMatchers.notNullValue;
 
 @RunWith(Parameterized.class)
 public class TestCreateOrders {
+    ApiOrders step =new ApiOrders();
     private String firstName;
     private String lastName;
     private String address;
@@ -41,20 +43,14 @@ public class TestCreateOrders {
         };
     }
 
-    @Before
-    public void setUp() {
-        RestAssured.baseURI = "https://qa-scooter.praktikum-services.ru/";}
-
     @Test
     @Description("Создание заказа с различной вариацией цвета самоката")
     public void createOrdersWithDifferentColor(){
-        given()
-                .header("Content-type", "application/json")
-                .body(new Orders(firstName,lastName,address,metroStation,phone,rentTime,deliveryDate,comment,color))
-                .post("/api/v1/orders")
+        step.getCreateOrders(firstName,lastName,address,metroStation,phone,rentTime,deliveryDate,comment,color)
                 .then()
                 .assertThat()
                 .body("track",notNullValue());
+
     }
 
 }
